@@ -1,0 +1,142 @@
+                                            +-------Raf'sArch installation-------+
+root@archiso~# wifi-menu #(If using a laptop)
+root@archiso~# lsblk #(check your hard drive location and any current partitions)
+root@archiso~# cfdisk #(create new partitions)
+    #Choose dos, create two partitions, 
+    #one of bulk size for your home/root partitions.
+    #one for swap, 4GB is sufficient.
+root@archiso~# lsblk -- again, to verify your new partitions. 
+    example; NAME        MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
+             sda           8:0    0 465.8G  0 disk 
+            ├─sda1        8:1    0  46.6G  0 part 
+            ├─sda2        8:2    0     4G  0 part 
+            mmcblk0     179:0    0   3.7G  0 disk 
+            └─mmcblk0p1 179:1    0   3.7G  0 part 
+#assuming I created sda1 as home/root and sda2 as swap
+root@archiso~# mkfs.ext4 /dev/sda1
+root@archiso~# mkswap /dev/sda2
+root@archiso~# swapon /dev/sda2
+root@archiso~# mount /dev/sda1 /mnt
+root@archiso~# pacstrap -i /mnt base base-devel #(installing the base)
+root@archiso~# genfstab -U -p /mnt >> /mnt/etc/fstab #(only do once, very important)
+    #check to be sure ; cat /mnt/etc/fstab
+root@archiso~# arch-chroot /mnt /bin/bash
+root@archiso~# nano /etc/locale.gen #(uncomment en_US.UTF-8)
+root@archiso~# locale-gen
+root@archiso~# echo LANG=en_US.UTF-8 > /etc/locale.conf
+root@archiso~# export LANG
+root@archiso~# tzselect
+root@archiso~# hwclock --systohc --utc
+root@archiso~# echo cuntslag > /etc/hostname #(choosing the name of the computer, I chose cuntslag)
+root@archiso~# nano /etc/hosts #(enter your hostname next to localhost)
+#Start installing dependencies
+root@archiso~# pacman -S iw wpa_supplicant
+root@archiso~# pacman -S dialog
+root@archiso~# pacman -S grub os-prober
+root@archiso~# grub-install /dev/sda #(if that doesn't work, see next line)
+>>root@archiso~# grub-install --target=i386-pc --recheck --force /dev/sda
+root@archiso~# grub-mkconfig -o /boot/grub/grub.cfg
+#Create password for root;
+root@archiso~# passwd
+    #enter twice
+#Exit chroot, if done properly, system should boot. Note; if dual booting, 
+#be sure to update your grub config file in your other OS before trying to boot into Arch.
+#Reboot, login to root.
+#Add your user.
+root@archiso~# useradd -m -G wheel -s /bin/bash 'rafal'
+root@archiso~# passwd rafal
+    enter twice
+root@archiso~# pacman -S sudo
+root@archiso~# EDITOR=nano visudo
+    #add your user to the sudoers list. Should look something like this;
+    root ALL=(ALL) ALL
+    >add user
+    rafal ALL=(ALL) ALL
+root@archiso~# pacman -S bash-completion
+root@archiso~# pacman -S xorg xorg-server xorg-xinit xorg-twm xterm
+root@archiso~# pacman -S xf86-input-synaptics
+root@archiso~# pacman -S firefox
+root@archiso~# pacman -S pulseaudio pulseaudio-alsa
+{	root@archiso~# pacman -S xf86-video-intel #(for Intel graphics cards)
+	root@archiso~# pacman -S nvidia #(for NVIDIA graphics cards)
+}	root@archiso~# pacman -S nvidia-utils #(for NVIDIA graphics cards)
+#Install desktop environment[1](see below)
+    [Install xfce4 Desktop Environment]
+    root@archiso~# pacman -S xfce4 xfce4-goodies
+    
+    [Install Budgie Desktop Environment]
+    root@archiso~# pacman -S budgie-desktop
+
+    [Install GNOME Desktop Environment]
+    root@archiso~# pacman -S gnome gnome-extra
+
+    [Install Cinnamon Desktop Environment]
+    root@archiso~# pacman -S cinnamon nemo-fileroller
+
+    [Install KDE Desktop Environment]
+    root@archiso~# pacman -S plasma
+
+    [Install Mate Desktop Environment]
+    root@archiso~# pacman -S mate mate-extra
+
+    [Install Deepin Desktop Environment]
+    root@archiso~# pacman -S deepin deepin-extra
+
+    [Install Enlightenment Desktop Environment]
+    root@archiso~# pacman -S enlightenment
+
+    [Install LXDE Desktop Environment]
+    root@archiso~# pacman -S lxde
+
+    [Install LXQT Desktop Environment]
+    root@archiso~# pacman -S lxqt
+ 
+#Install display manager[2](see below)
+root@archiso~# pacman -S #(few to choose from: gdm, lightdm or lxdm) 
+#Enable your display manager to load on boot;
+root@archiso~# systemctl enable gdm #(or whichever display manager you chose)
+root@archiso~# reboot
+#Now you'll be in your new Arch display manager to login.
+#To add the AUR repo:
+rafal@TerrorSecDemo $ sudo nano /etc/pacman.conf
+#Add these lines to the very bottom:
+
+	[archlinuxfr]
+	SigLevel = Never
+	Server = http://repo.archlinux.fr/$arch
+
+#control + o to save, then press enter and control+x to exit.
+#To add the BlackArch repo:
+rafal@TerrorSecDemo $ curl -O https://blackarch.org/strap.sh
+rafal@TerrorSecDemo $ chmod a+x strap.sh
+rafal@TerrorSecDemo $ sudo ./strap.sh
+#After that's finished, you can install the BlackArch tools.
+#NOTE: You may need to enable multilib for some BlackArch tools.
+# To list all of the available tools, run
+
+rafal@TerrorSecDemo $ sudo pacman -Sgg | grep blackarch | cut -d' ' -f2 | sort -u
+# To install all of the tools, run:
+
+rafal@TerrorSecDemo $ sudo pacman -S blackarch
+# To install a category of tools, run:
+
+$ sudo pacman -S blackarch-'category'
+# To see the blackarch categories, run:
+
+rafal@TerrorSecDemo $ sudo pacman -Sg | grep blackarch
+# To see all the tools in a category, run:
+
+rafal@TerrorSecDemo $ sudo pacman -Sg | grep blackarch-'category'
+#To make the progress bar a pacman eating candy, run:
+rafal@TerrorSecDemo $ sudo nano /etc/pacman.conf
+#Scroll down to the "#Misc options" 
+#At the bottom of that section, add ILoveCandy
+#It should look something like this:
+		# Misc options
+		#UseSyslog
+		#Color
+		#TotalDownload
+		CheckSpace
+		#VerbosePkgLists
+		ILoveCandy
+#That's about it. If I remember anything I'll update the post. Good luck !
